@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Simple Blackjack</title>
+  <style>
+    body { font-family: sans-serif; text-align: center; padding: 20px; }
+    #game { margin-top: 20px; }
+    .hand { margin: 10px 0; }
+    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+  </style>
+</head>
+<body>
+  <h1>Blackjack</h1>
+  <div id="game">
+    <div class="hand" id="player-hand"></div>
+    <div class="hand" id="dealer-hand"></div>
+    <div id="result"></div>
+    <button onclick="startGame()">Start Game</button>
+    <button onclick="hit()">Hit</button>
+    <button onclick="stand()">Stand</button>
+  </div>
+
+  <script>
+    let deck, player, dealer, gameOver;
+
+    function createDeck() {
+      const suits = ['♠', '♥', '♦', '♣'];
+      const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+      const deck = [];
+      for (let suit of suits) {
+        for (let value of values) {
+          deck.push({ suit, value });
+        }
+      }
+      return deck.sort(() => Math.random() - 0.5);
+    }
+
+    function getValue(card) {
+      if (card.value === 'A') return 11;
+      if (['K', 'Q', 'J'].includes(card.value)) return 10;
+      return parseInt(card.value);
+    }
+
+    function getHandValue(hand) {
+      let value = 0, aces = 0;
+      for (let card of hand) {
+        value += getValue(card);
+        if (card.value === 'A') aces++;
+      }
+      while (value > 21 && aces > 0) {
+        value -= 10;
+        aces--;
+      }
+      return value;
+    }
+
+    function renderHand(hand, elementId) {
+      document.getElementById(elementId).innerHTML = hand.map(c => `${c.value}${c.suit}`).join(' ') +
+        ` (${getHandValue(hand)})`;
+    }
+
+    function startGame() {
+      deck = createDeck();
+      player = [deck.pop(), deck.pop()];
+      dealer = [deck.pop(), deck.pop()];
+      gameOver = false;
+      document.getElementById('result').textContent = '';
+      renderHand(player, 'player-hand');
+      renderHand([dealer[0], { value: '?', suit: '?' }], 'dealer-hand');
+    }
+
+    function hit() {
+      if (gameOver) return;
+      player.push(deck.pop());
+      renderHand(player, 'player-hand');
+      if (getHandValue(player) > 21) {
+        endGame('You busted!');
+      }
+    }
+
+    function stand() {
+      if (gameOver) return;
+      while (getHandValue(dealer) < 17) {
+        dealer.push(deck.pop());
+      }
+      renderHand(dealer, 'dealer-hand');
+      const playerVal = getHandValue(player);
+      const dealerVal = getHandValue(dealer);
+
+      if (dealerVal > 21 || playerVal > dealerVal) {
+        endGame('You win!');
+      } else if (dealerVal === playerVal) {
+        endGame('Push!');
+      } else {
+        endGame('Dealer wins!');
+      }
+    }
+
+    function endGame(message) {
+      gameOver = true;
+      renderHand(dealer, 'dealer-hand');
+      document.getElementById('result').textContent = message;
+    }
+  </script>
+</body>
+</html>
