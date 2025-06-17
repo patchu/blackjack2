@@ -2,81 +2,29 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>Blackjack</title>
   <style>
     body {
-      margin: 0;
-      font-family: 'Segoe UI', sans-serif;
-      background: radial-gradient(#005, #000);
+      font-family: sans-serif;
+      background: radial-gradient(#003300, #000000);
       color: white;
       text-align: center;
     }
-
-    h1 {
-      font-size: 3em;
-      margin-top: 0.5em;
-    }
-
-    .table {
-      background: #093;
-      padding: 30px;
-      border-radius: 20px;
-      margin: 30px auto;
-      width: 90%;
-      max-width: 600px;
-      box-shadow: 0 0 20px #000;
-    }
-
-    .hand {
-      margin: 20px 0;
-      font-size: 1.5em;
-    }
-
-    .card {
-      display: inline-block;
-      width: 60px;
-      height: 90px;
-      margin: 0 5px;
-      background: white;
-      color: black;
-      border-radius: 8px;
-      box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
-      font-weight: bold;
-      font-size: 1.2em;
-      line-height: 90px;
-    }
-
-    .buttons {
-      margin-top: 20px;
-    }
-
+    h1 { font-size: 3em; margin-top: 0.5em; }
+    .table { background: #093; padding: 20px; border-radius: 20px; max-width: 700px; margin: auto; }
+    .hand { margin: 20px 0; }
+    .card-img { height: 100px; margin: 0 5px; border-radius: 5px; }
     button {
-      margin: 10px;
       padding: 10px 20px;
-      font-size: 1.1em;
-      border: none;
-      border-radius: 10px;
-      background: #222;
-      color: white;
+      margin: 10px;
+      font-size: 1.2em;
+      background: #222; color: white;
+      border: none; border-radius: 10px;
       cursor: pointer;
-      transition: background 0.3s;
     }
-
-    button:hover {
-      background: #555;
-    }
-
-    #result {
-      font-size: 1.5em;
-      margin-top: 15px;
-    }
-
-    .score {
-      margin-top: 10px;
-      font-size: 1.1em;
-      color: #ccc;
-    }
+    button:hover { background: #555; }
+    #result { font-size: 1.5em; margin-top: 20px; }
+    .score { margin-top: 10px; font-size: 1.1em; color: #ccc; }
   </style>
 </head>
 <body>
@@ -85,11 +33,9 @@
     <div class="hand" id="dealer-hand"></div>
     <div class="hand" id="player-hand"></div>
     <div id="result"></div>
-    <div class="buttons">
-      <button onclick="startGame()">Start Game</button>
-      <button onclick="hit()">Hit</button>
-      <button onclick="stand()">Stand</button>
-    </div>
+    <button onclick="startGame()">Start Game</button>
+    <button onclick="hit()">Hit</button>
+    <button onclick="stand()">Stand</button>
     <div class="score" id="score"></div>
   </div>
 
@@ -97,7 +43,7 @@
     let deck, player, dealer, gameOver, wins = 0, losses = 0;
 
     function createDeck() {
-      const suits = ['♠', '♥', '♦', '♣'];
+      const suits = ['S', 'H', 'D', 'C'];
       const values = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
       const deck = [];
       for (let suit of suits) {
@@ -127,22 +73,29 @@
       return value;
     }
 
+    function getCardImageUrl(card) {
+      const name = card.value + card.suit;
+      return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${name}.png`;
+    }
+
     function renderHand(hand, elementId, hideSecond = false) {
       const container = document.getElementById(elementId);
       container.innerHTML = '';
-      hand.forEach((card, index) => {
-        const div = document.createElement('div');
-        div.className = 'card';
-        if (hideSecond && index === 1) {
-          div.textContent = '?';
+      hand.forEach((card, idx) => {
+        const img = document.createElement('img');
+        img.className = 'card-img';
+        if (hideSecond && idx === 1) {
+          img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Card_back_01.svg/200px-Card_back_01.svg.png';
         } else {
-          div.textContent = `${card.value}${card.suit}`;
+          img.src = getCardImageUrl(card);
         }
-        container.appendChild(div);
+        container.appendChild(img);
       });
       if (!(hideSecond && elementId === 'dealer-hand')) {
         const val = getHandValue(hand);
-        container.innerHTML += ` &nbsp; (${val})`;
+        const valDiv = document.createElement('div');
+        valDiv.textContent = `(${val})`;
+        container.appendChild(valDiv);
       }
     }
 
