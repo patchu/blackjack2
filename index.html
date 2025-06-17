@@ -73,10 +73,10 @@
       return value;
     }
 
-    function getCardImageUrl(card) {
-      const name = card.value + card.suit;
-      return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${name}.png`;
-    }
+function getCardImageUrl(card) {
+  const name = card.value + card.suit;
+  return `https://raw.githubusercontent.com/hayeah/playing-cards-assets/master/png/${name.toLowerCase()}.png`;
+}
 
     function renderHand(hand, elementId, hideSecond = false) {
       const container = document.getElementById(elementId);
