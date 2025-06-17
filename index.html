@@ -78,26 +78,28 @@ function getCardImageUrl(card) {
   return `https://deckofcardsapi.com/static/img/${name}.png`;
 }
 
-    function renderHand(hand, elementId, hideSecond = false) {
-      const container = document.getElementById(elementId);
-      container.innerHTML = '';
-      hand.forEach((card, idx) => {
-        const img = document.createElement('img');
-        img.className = 'card-img';
-        if (hideSecond && idx === 1) {
-          img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Card_back_01.svg/200px-Card_back_01.svg.png';
-        } else {
-          img.src = getCardImageUrl(card);
-        }
-        container.appendChild(img);
-      });
-      if (!(hideSecond && elementId === 'dealer-hand')) {
-        const val = getHandValue(hand);
-        const valDiv = document.createElement('div');
-        valDiv.textContent = `(${val})`;
-        container.appendChild(valDiv);
-      }
+function renderHand(hand, elementId, hideSecond = false) {
+  const container = document.getElementById(elementId);
+  container.innerHTML = '';
+  hand.forEach((card, idx) => {
+    const img = document.createElement('img');
+    img.className = 'card-img';
+    if (hideSecond && idx === 1) {
+      img.src = 'https://upload.wikimedia.org/wikipedia/commons/thumb/5/54/Card_back_01.svg/200px-Card_back_01.svg.png';
+    } else {
+      img.src = getCardImageUrl(card);
     }
+    container.appendChild(img);
+  });
+
+  if (!(hideSecond && elementId === 'dealer-hand')) {
+    const val = getHandValue(hand);
+    const valDiv = document.createElement('div');
+    valDiv.textContent = `(${val})`;
+    container.appendChild(valDiv);
+  }
+}
+
 
     function startGame() {
       deck = createDeck();
