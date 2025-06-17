@@ -3,27 +3,98 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
-  <title>Simple Blackjack</title>
+  <title>Blackjack</title>
   <style>
-    body { font-family: sans-serif; text-align: center; padding: 20px; }
-    #game { margin-top: 20px; }
-    .hand { margin: 10px 0; }
-    button { margin: 5px; padding: 10px 20px; font-size: 16px; }
+    body {
+      margin: 0;
+      font-family: 'Segoe UI', sans-serif;
+      background: radial-gradient(#005, #000);
+      color: white;
+      text-align: center;
+    }
+
+    h1 {
+      font-size: 3em;
+      margin-top: 0.5em;
+    }
+
+    .table {
+      background: #093;
+      padding: 30px;
+      border-radius: 20px;
+      margin: 30px auto;
+      width: 90%;
+      max-width: 600px;
+      box-shadow: 0 0 20px #000;
+    }
+
+    .hand {
+      margin: 20px 0;
+      font-size: 1.5em;
+    }
+
+    .card {
+      display: inline-block;
+      width: 60px;
+      height: 90px;
+      margin: 0 5px;
+      background: white;
+      color: black;
+      border-radius: 8px;
+      box-shadow: 2px 2px 5px rgba(0,0,0,0.6);
+      font-weight: bold;
+      font-size: 1.2em;
+      line-height: 90px;
+    }
+
+    .buttons {
+      margin-top: 20px;
+    }
+
+    button {
+      margin: 10px;
+      padding: 10px 20px;
+      font-size: 1.1em;
+      border: none;
+      border-radius: 10px;
+      background: #222;
+      color: white;
+      cursor: pointer;
+      transition: background 0.3s;
+    }
+
+    button:hover {
+      background: #555;
+    }
+
+    #result {
+      font-size: 1.5em;
+      margin-top: 15px;
+    }
+
+    .score {
+      margin-top: 10px;
+      font-size: 1.1em;
+      color: #ccc;
+    }
   </style>
 </head>
 <body>
   <h1>Blackjack</h1>
-  <div id="game">
-    <div class="hand" id="player-hand"></div>
+  <div class="table">
     <div class="hand" id="dealer-hand"></div>
+    <div class="hand" id="player-hand"></div>
     <div id="result"></div>
-    <button onclick="startGame()">Start Game</button>
-    <button onclick="hit()">Hit</button>
-    <button onclick="stand()">Stand</button>
+    <div class="buttons">
+      <button onclick="startGame()">Start Game</button>
+      <button onclick="hit()">Hit</button>
+      <button onclick="stand()">Stand</button>
+    </div>
+    <div class="score" id="score"></div>
   </div>
 
   <script>
-    let deck, player, dealer, gameOver;
+    let deck, player, dealer, gameOver, wins = 0, losses = 0;
 
     function createDeck() {
       const suits = ['♠', '♥', '♦', '♣'];
@@ -56,9 +127,23 @@
       return value;
     }
 
-    function renderHand(hand, elementId) {
-      document.getElementById(elementId).innerHTML = hand.map(c => `${c.value}${c.suit}`).join(' ') +
-        ` (${getHandValue(hand)})`;
+    function renderHand(hand, elementId, hideSecond = false) {
+      const container = document.getElementById(elementId);
+      container.innerHTML = '';
+      hand.forEach((card, index) => {
+        const div = document.createElement('div');
+        div.className = 'card';
+        if (hideSecond && index === 1) {
+          div.textContent = '?';
+        } else {
+          div.textContent = `${card.value}${card.suit}`;
+        }
+        container.appendChild(div);
+      });
+      if (!(hideSecond && elementId === 'dealer-hand')) {
+        const val = getHandValue(hand);
+        container.innerHTML += ` &nbsp; (${val})`;
+      }
     }
 
     function startGame() {
@@ -68,7 +153,8 @@
       gameOver = false;
       document.getElementById('result').textContent = '';
       renderHand(player, 'player-hand');
-      renderHand([dealer[0], { value: '?', suit: '?' }], 'dealer-hand');
+      renderHand(dealer, 'dealer-hand', true);
+      updateScore();
     }
 
     function hit() {
@@ -76,6 +162,7 @@
       player.push(deck.pop());
       renderHand(player, 'player-hand');
       if (getHandValue(player) > 21) {
+        losses++;
         endGame('You busted!');
       }
     }
@@ -85,23 +172,31 @@
       while (getHandValue(dealer) < 17) {
         dealer.push(deck.pop());
       }
-      renderHand(dealer, 'dealer-hand');
       const playerVal = getHandValue(player);
       const dealerVal = getHandValue(dealer);
+      let message;
 
       if (dealerVal > 21 || playerVal > dealerVal) {
-        endGame('You win!');
+        wins++;
+        message = 'You win!';
       } else if (dealerVal === playerVal) {
-        endGame('Push!');
+        message = 'Push!';
       } else {
-        endGame('Dealer wins!');
+        losses++;
+        message = 'Dealer wins!';
       }
+      endGame(message);
     }
 
     function endGame(message) {
       gameOver = true;
       renderHand(dealer, 'dealer-hand');
       document.getElementById('result').textContent = message;
+      updateScore();
+    }
+
+    function updateScore() {
+      document.getElementById('score').textContent = `Wins: ${wins} | Losses: ${losses}`;
     }
   </script>
 </body>
