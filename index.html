@@ -3,204 +3,32 @@
   <head>
     <meta charset="UTF-8" />
     <title>Blackjack</title>
-    <style>
-      body {
-        font-family: sans-serif;
-        background: radial-gradient(#003300, #000000);
-        color: white;
-        text-align: center;
-      }
-      h1 {
-        font-size: 3em;
-        margin-top: 0.5em;
-      }
-      .table {
-        background: rgb(67, 56, 165);
-        padding: 20px;
-        border-radius: 20px;
-        max-width: 700px;
-        margin: auto;
-      }
-      .hand {
-        margin: 20px 0;
-      }
-      .card-img {
-        height: 100px;
-        margin: 0 5px;
-        border-radius: 5px;
-      }
-      button {
-        padding: 10px 20px;
-        margin: 10px;
-        font-size: 1.2em;
-        background: #222;
-        color: white;
-        border: none;
-        border-radius: 10px;
-        cursor: pointer;
-      }
-      button:hover {
-        background: #555;
-      }
-      #result {
-        font-size: 1.5em;
-        margin-top: 20px;
-      }
-      .score {
-        margin-top: 10px;
-        font-size: 1.1em;
-        color: #ccc;
-      }
-    </style>
+    <link rel="stylesheet" href="styles.css" />
   </head>
   <body>
     <h1>Blackjack</h1>
+    <div id="player-name" style="font-size: 1.5em; margin-bottom: 10px"></div>
+
     <div class="table">
       <div class="hand" id="dealer-hand"></div>
       <div class="hand" id="player-hand"></div>
       <div id="result"></div>
+
       <button onclick="startGame()">Start Game</button>
       <button onclick="hit()">Hit</button>
       <button onclick="stand()">Stand</button>
+
       <div class="score" id="score"></div>
+
+      <button
+        id="play-again-button"
+        style="display: none"
+        onclick="resetGame()"
+      >
+        Play Again
+      </button>
     </div>
 
-    <script>
-      let deck,
-        player,
-        dealer,
-        gameOver,
-        wins = 0,
-        losses = 0;
-
-      function createDeck() {
-        const suits = ["S", "H", "D", "C"];
-        const values = [
-          "A",
-          "2",
-          "3",
-          "4",
-          "5",
-          "6",
-          "7",
-          "8",
-          "9",
-          "10",
-          "J",
-          "Q",
-          "K",
-        ];
-        const deck = [];
-        for (let suit of suits) {
-          for (let value of values) {
-            deck.push({ suit, value });
-          }
-        }
-        return deck.sort(() => Math.random() - 0.5);
-      }
-
-      function getValue(card) {
-        if (card.value === "A") return 11;
-        if (["K", "Q", "J"].includes(card.value)) return 10;
-        return parseInt(card.value);
-      }
-
-      function getHandValue(hand) {
-        let value = 0,
-          aces = 0;
-        for (let card of hand) {
-          value += getValue(card);
-          if (card.value === "A") aces++;
-        }
-        while (value > 21 && aces > 0) {
-          value -= 10;
-          aces--;
-        }
-        return value;
-      }
-
-      function getCardImageUrl(card) {
-        let value = card.value;
-        if (value === "10") value = "0"; // API quirk: 10 → '0'
-        return `https://deckofcardsapi.com/static/img/${value}${card.suit}.png`;
-      }
-
-      function renderHand(hand, elementId, hideSecond = false) {
-        const container = document.getElementById(elementId);
-        container.innerHTML = "";
-        hand.forEach((card, idx) => {
-          const img = document.createElement("img");
-          img.className = "card-img";
-          if (hideSecond && idx === 1) {
-            img.src = "https://deckofcardsapi.com/static/img/back.png";
-          } else {
-            img.src = getCardImageUrl(card);
-          }
-          container.appendChild(img);
-        });
-
-        if (!(hideSecond && elementId === "dealer-hand")) {
-          const val = getHandValue(hand);
-          const valDiv = document.createElement("div");
-          valDiv.textContent = `(${val})`;
-          container.appendChild(valDiv);
-        }
-      }
-
-      function startGame() {
-        deck = createDeck();
-        player = [deck.pop(), deck.pop()];
-        dealer = [deck.pop(), deck.pop()];
-        gameOver = false;
-        document.getElementById("result").textContent = "";
-        renderHand(player, "player-hand");
-        renderHand(dealer, "dealer-hand", true);
-        updateScore();
-      }
-
-      function hit() {
-        if (gameOver) return;
-        player.push(deck.pop());
-        renderHand(player, "player-hand");
-        if (getHandValue(player) > 21) {
-          losses++;
-          endGame("You busted!");
-        }
-      }
-
-      function stand() {
-        if (gameOver) return;
-        while (getHandValue(dealer) < 17) {
-          dealer.push(deck.pop());
-        }
-        const playerVal = getHandValue(player);
-        const dealerVal = getHandValue(dealer);
-        let message;
-
-        if (dealerVal > 21 || playerVal > dealerVal) {
-          wins++;
-          message = "You win!";
-        } else if (dealerVal === playerVal) {
-          message = "Push!";
-        } else {
-          losses++;
-          message = "Dealer wins!";
-        }
-        endGame(message);
-      }
-
-      function endGame(message) {
-        gameOver = true;
-        renderHand(dealer, "dealer-hand");
-        document.getElementById("result").textContent = message;
-        updateScore();
-      }
-
-      function updateScore() {
-        document.getElementById(
-          "score"
-        ).textContent = `Wins: ${wins} | Losses: ${losses}`;
-      }
-    </script>
+    <script src="script.js"></script>
   </body>
 </html>
