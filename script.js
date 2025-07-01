@@ -6,6 +6,18 @@ const maxHands = 5;
 let currentBet = 0;
 let playerName = "";
 
+const SUPABASE_URL = "https://nrbrprhyfwoxgccufpfu.supabase.co";
+const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im5yYnJwcmh5ZndveGdjY3VmcGZ1Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTEzODU0NzIsImV4cCI6MjA2Njk2MTQ3Mn0.dOc1QCHD88sBN9SiY7mmNNWg5gkjqgI7UVMN5wo-dM0";
+const HEADERS = {
+  apikey: SUPABASE_KEY,
+  Authorization: `Bearer ${SUPABASE_KEY}`,
+  "Content-Type": "application/json"
+};
+
+let playerId = null;
+let sessionStartTime = null;
+
+
 const playAgainButton = document.getElementById("play-again-button");
 
 function createDeck() {
@@ -69,7 +81,7 @@ function renderHand(hand, elementId, hideSecond = false) {
   }
 }
 
-function startGame() {
+async function startGame() {
   if (playerName === "") {
     playerName = prompt("Enter your name:");
     if (!playerName) {
@@ -77,6 +89,7 @@ function startGame() {
       return;
     }
     document.getElementById("player-name").textContent = `Player: ${playerName}`;
+    await getOrCreatePlayer(playerName.toLowerCase());
   }
 
   if (bankroll <= 0 || handCount >= maxHands) {
@@ -89,6 +102,8 @@ function startGame() {
     alert("Invalid bet amount. Try again.");
     return;
   }
+
+  sessionStartTime = new Date().toISOString();
 
   deck = createDeck();
   player = [deck.pop(), deck.pop()];
@@ -156,6 +171,45 @@ function endGame(message) {
       playAgainButton.style.display = "inline-block";
     }, 100);
   }
+
+  if (bankroll <= 0 || handCount >= maxHands) {
+    setTimeout(async () => {
+      alert(`Game over! Final bankroll: $${bankroll}`);
+      console.log("Sending history to Supabase…");
+
+      const sessionEndTime = new Date().toISOString();
+
+      await fetch(`${SUPABASE_URL}/rest/v1/sessions`, {
+        method: "POST",
+        headers: HEADERS,
+        body: JSON.stringify({
+          player_id: playerId,
+          start_time: sessionStartTime,
+          end_time: sessionEndTime,
+          final_bankroll: bankroll,
+          hands_played: handCount,
+          wins: wins,
+          losses: losses
+        })
+      });
+
+      // Update player stats
+      await fetch(`${SUPABASE_URL}/rest/v1/players?player_id=eq.${playerId}`, {
+        method: "PATCH",
+        headers: HEADERS,
+        body: JSON.stringify({
+          total_sessions: wins + losses > 0 ? 1 : 0, // assume 1 session only if played
+          total_hands: handCount,
+          total_wins: wins,
+          total_losses: losses,
+          last_session_at: sessionEndTime
+        })
+      });
+
+      playAgainButton.style.display = "inline-block";
+    }, 100);
+  }
+
 }
 
 function resetGame() {
@@ -171,4 +225,30 @@ function resetGame() {
 function updateScore() {
   document.getElementById("score").textContent =
     `Bankroll: $${bankroll} | Wins: ${wins} | Losses: ${losses} | Hand ${handCount}/${maxHands}`;
+}
+
+async function getOrCreatePlayer(name) {
+  const res = await fetch(`${SUPABASE_URL}/rest/v1/players?name=eq.${name}`, { headers: HEADERS });
+  const existing = await res.json();
+
+  if (existing.length > 0) {
+    console.log("Existing player found:", existing);
+    playerId = existing[0].player_id;
+  } else {
+    const insertRes = await fetch(`${SUPABASE_URL}/rest/v1/players`, {
+      method: "POST",
+      headers: HEADERS,
+      body: JSON.stringify({
+        name: name,
+        total_sessions: 0,
+        total_hands: 0,
+        total_wins: 0,
+        total_losses: 0,
+        last_session_at: new Date().toISOString()
+      })
+    });
+    const inserted = await insertRes.json();
+    console.log("New player created:", inserted);
+    playerId = inserted[0].player_id;
+  }
 }
